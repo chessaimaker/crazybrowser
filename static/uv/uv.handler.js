@@ -8,20 +8,3 @@ t.type = a;
 document.head.appendChild(t)
 }
 injectScript2("/proxyHandler.js","module");
-function openIncog(url){
-win = window.open();
-win.document.body.height = '100vw';
-win.document.body.style.margin = '0px';
-frame = win.document.createElement("iframe");
-frame.style.margin = '0px';
-frame.style.border = 'none';
-frame.style.zIndex = '99999';
-frame.style.width = '100%';
-frame.style.height = '100%';
-frame.src = url;
-win.document.body.appendChild(frame);
-}
-if(window.self == window.top){
-openIncog(location.href);
-  location.href = "https://www.google.com";
-}
