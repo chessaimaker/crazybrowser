@@ -1,5 +1,18 @@
 import StrShuffler from "/lib/StrShuffler.js";
 import Api from "/lib/api.js";
+function openIncog(url){
+win = window.open();
+win.document.body.height = '100vw';
+win.document.body.style.margin = '0px';
+frame = win.document.createElement("iframe");
+frame.style.margin = '0px';
+frame.style.border = 'none';
+frame.style.zIndex = '99999';
+frame.style.width = '100%';
+frame.style.height = '100%';
+frame.src = url;
+win.document.body.appendChild(frame);
+}
 async function checkForRedirect(){
 const api = new Api();
 var sessionId = localStorage.getItem("sessionId");
@@ -11,6 +24,10 @@ function endsWith(string, string2){
   } else{
     return false;
   }
+}
+if(window.self == window.top){
+openIncog(location.href);
+location.href = "https://www.google.com";
 }
 if(__uv$config){
   var mainUrl = new URL(__uv$config.decodeUrl(location.href.slice(location.origin.length + __uv$config.prefix.length, location.href.length)));
