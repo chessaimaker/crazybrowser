@@ -1,11 +1,12 @@
 import express from 'express';
+import wisp from "wisp-server-node";
 import createRammerhead from "../rammerhead/src/server/index.js";
 import { createBareServer } from '@tomphttp/bare-server-node';
 import { fileURLToPath } from "node:url";
 import { createServer } from "node:http";
 import { hostname } from "node:os";
 import serveStatic from "serve-static";
-
+import { Socket } from "net";
 // The following message MAY NOT be removed
 console.log("Rammerhead easy deployment version\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software, and you are welcome to redistribute it\nunder the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nYou should have received a copy of the GNU General Public License\nalong with this program. If not, see <https://www.gnu.org/licenses/>.\n");
 const bareServer = createBareServer('/bare/');
@@ -42,16 +43,9 @@ function endsWith(string, string2){
     return false;
   }
 }
-app.use((req, res, next) => {
-    if(shouldRouteRh(req)){
-	    rh.emit("request", req, res); 
-    } else if (bareServer.shouldRoute(req)) {
-    bareServer.routeRequest(req, res)
-  } else {
-	    next();
-    }
-});
-
+function routeRhRequest(req, res) {
+  rh.emit("request", req, res);
+}
 app.use(serveStatic(fileURLToPath(new URL("../static/", import.meta.url))));
 app.all("/*", (req, res) => {
 	var windowLocation = req.url;
@@ -64,17 +58,24 @@ app.all("/*", (req, res) => {
 		res.status(404).send("404 Not Found");
 	}
 })
-server.on("request", app);
-server.on("upgrade", (req, socket, head) => {
-    if(shouldRouteRh(req)){
-	    rh.emit("upgrade", req, socket, head);
-    }else if(bareServer.shouldRoute(req)){
-    	bareServer.routeUpgrade(req, socket, head)
-    } else{
-	socket.end();    
-    }
+server.on("request", (req, res) => {
+  if (bare.shouldRoute(req)) {
+    bare.routeRequest(req, res);
+  } else if (shouldRouteRh(req)) {
+    routeRhRequest(req, res);
+  } else {
+    app(req, res);
+  }
 });
-
+server.on("upgrade", (req, socket, head) => {
+  if (bare.shouldRoute(req)) {
+    bare.routeUpgrade(req, socket, head);
+  } else if (shouldRouteRh(req)) {
+    routeRhUpgrade(req, socket, head);
+  } else {
+    wisp.routeRequest(req, socket as Socket, head);
+  }
+});
 server.on("listening", () => {
   const addr = server.address();
 
